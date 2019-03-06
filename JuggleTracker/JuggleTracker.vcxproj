@@ -86,10 +86,11 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="cropWindow.cpp" />
     <ClCompile Include="JuggleTracker.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="resource.h" />
+    <ClInclude Include="cropWindow.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\lena.jpg" />
