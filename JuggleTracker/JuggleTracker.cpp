@@ -1,4 +1,5 @@
 #include<opencv2/opencv.hpp>
+#include<windows.h>
 #include<iostream>
 
 #include "cropWindow.h"
@@ -11,14 +12,15 @@ using namespace cropwin;
 
 int main()
 {
-
-
+	
 	const string winTresh = "Treshold", winColor = "Color", winTrack = "Settings";
 
 	//Set SimpleBlobDetector parameters
 	SimpleBlobDetector::Params params;
 	params.filterByArea = true;
-	params.filterByCircularity = false;
+	params.filterByCircularity = true;
+	params.minCircularity = .7;
+	params.maxCircularity = 1;
 	params.filterByConvexity = false;
 	params.filterByInertia = false;
 	params.filterByColor = true;
@@ -27,7 +29,8 @@ int main()
 
 	Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(params);
 
-	VideoCapture cap(1);
+
+	VideoCapture cap(0);
 	if (!cap.isOpened())
 	{
 		cout << "Failed to open webcam..." << endl;
@@ -55,7 +58,8 @@ int main()
 
 		// grey = cropWindow.getCropped();
 
-		cvtColor(cropWindow.getCropped(), gray, COLOR_BGR2GRAY);
+		// cvtColor(cropWindow.getCropped(), gray, COLOR_BGR2GRAY);
+		split(cropWindow.getCropped(), bgr);
 		gray = bgr[1];
 
 		// std::vector<KeyPoint> keypoints;
