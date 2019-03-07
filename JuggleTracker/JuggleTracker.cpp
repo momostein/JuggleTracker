@@ -7,11 +7,27 @@ using namespace std;
 using namespace cv;
 using namespace cropwin;
 
+
+
 int main()
 {
+
+
 	const string winTresh = "Treshold", winColor = "Color", winTrack = "Settings";
 
-	VideoCapture cap(0);
+	//Set SimpleBlobDetector parameters
+	SimpleBlobDetector::Params params;
+	params.filterByArea = true;
+	params.filterByCircularity = false;
+	params.filterByConvexity = false;
+	params.filterByInertia = false;
+	params.filterByColor = true;
+	params.blobColor = 255;
+	params.minArea = 100;
+
+	Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(params);
+
+	VideoCapture cap(1);
 	if (!cap.isOpened())
 	{
 		cout << "Failed to open webcam..." << endl;
@@ -31,23 +47,35 @@ int main()
 
 	while (true)
 	{
-		Mat frame, grey;
+		Mat frame, green, bgr[3];
 		cap >> frame; // get a new frame from camera
 		
 		
 		cropWindow.setImage(frame);
 
 		// grey = cropWindow.getCropped();
-		cvtColor(cropWindow.getCropped(), grey, COLOR_BGR2GRAY);
+
+		split(cropWindow.getCropped(), bgr);
+		green = bgr[1];
 
 		// std::vector<KeyPoint> keypoints;
 		// detector.detect(frame, keypoints);
 
 		int bSize = 2*blurSize + 1;
-		GaussianBlur(grey, grey, Size(bSize, bSize), 1.5, 1.5);
-		threshold(grey, grey, treshold, 255, THRESH_BINARY_INV);
+		// GaussianBlur(green, green, Size(bSize, bSize), 1.5, 1.5);
+		// threshold(grey, grey, treshold, 255, THRESH_BINARY_INV);
 
-		imshow(winTresh, grey);
+		vector<cv::KeyPoint> keypoints;
+		detector->detect(green, keypoints);
+
+		Mat im_with_keypoints;
+		drawKeypoints(cropWindow.getCropped(), keypoints, im_with_keypoints, Scalar(0, 0, 255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+
+		// Show blobs
+		imshow("keypoints", im_with_keypoints);
+		imshow(winTresh, green);
+		cropWindow.show();
+
 		if (waitKey(10) >= 0) break;
 	}
 	// the camera will be deinitialized automatically in VideoCapture destructor
