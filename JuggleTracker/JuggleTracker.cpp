@@ -47,7 +47,7 @@ int main()
 
 	while (true)
 	{
-		Mat frame, green, bgr[3];
+		Mat frame, gray, bgr[3];
 		cap >> frame; // get a new frame from camera
 		
 		
@@ -55,8 +55,8 @@ int main()
 
 		// grey = cropWindow.getCropped();
 
-		split(cropWindow.getCropped(), bgr);
-		green = bgr[1];
+		cvtColor(cropWindow.getCropped(), gray, COLOR_BGR2GRAY);
+		gray = bgr[1];
 
 		// std::vector<KeyPoint> keypoints;
 		// detector.detect(frame, keypoints);
@@ -66,14 +66,14 @@ int main()
 		// threshold(grey, grey, treshold, 255, THRESH_BINARY_INV);
 
 		vector<cv::KeyPoint> keypoints;
-		detector->detect(green, keypoints);
+		detector->detect(gray, keypoints);
 
 		Mat im_with_keypoints;
 		drawKeypoints(cropWindow.getCropped(), keypoints, im_with_keypoints, Scalar(0, 0, 255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
 
 		// Show blobs
 		imshow("keypoints", im_with_keypoints);
-		imshow(winTresh, green);
+		imshow(winTresh, gray);
 		cropWindow.show();
 
 		if (waitKey(10) >= 0) break;
