@@ -3,6 +3,7 @@
 #include<iostream>
 
 #include "cropWindow.h"
+#include "midi.h"
 
 using namespace std;
 using namespace cv;
@@ -16,10 +17,17 @@ const bool BLUR = false;
 
 int main()
 {
-	
+	// Window names
 	const string winTresh = "Treshold", winColor = "Color", winControls = "Settings";
 
-	//Set SimpleBlobDetector parameters
+	// Midi port
+	const int midiport = 1;
+	const int note = 69;
+	const int velocity = 70;
+	bool noteOn = false;
+
+
+	// Set SimpleBlobDetector parameters
 	SimpleBlobDetector::Params params;
 	params.filterByArea = true;
 	params.filterByCircularity = false;
@@ -36,7 +44,17 @@ int main()
 	params.maxThreshold = 255;
 	params.thresholdStep = 20;
 
+	// Create blobdetector
 	Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(params);
+
+	// Open midi port
+	midi::MIDIManager midiMgr(midiport);
+	if (!midiMgr.isOpen())
+	{
+		cout << "Failed to open midi port!" << endl;
+		cin.get();
+		return -1;
+	}
 
 
 	VideoCapture cap(0);
@@ -96,10 +114,6 @@ int main()
 
 		// split(cropWindow.getCropped(), bgr);
 		// gray = bgr[1];
-
-
-
-
 		
 		// threshold(grey, grey, treshold, 255, THRESH_BINARY_INV);
 
@@ -110,6 +124,20 @@ int main()
 
 		Mat im_with_keypoints;
 		drawKeypoints(cropWindow.getCropped(), keypoints, im_with_keypoints, Scalar(0, 0, 255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+
+		if (keypoints.size() > 0)
+		{
+			if (!noteOn)
+			{
+				midiMgr.sendMsg(midi::NOTE_ON, note, velocity);
+				noteOn = true;
+			}
+		}
+		else if (noteOn)
+		{
+			midiMgr.sendMsg(midi::NOTE_OFF, note, 0);
+			noteOn = false;
+		}
 
 		// Show blobs
 		imshow("keypoints", im_with_keypoints);
