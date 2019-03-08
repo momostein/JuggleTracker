@@ -8,24 +8,27 @@ using namespace std;
 using namespace cv;
 using namespace cropwin;
 
+const int max_value_H = 360 / 2;
+const int max_value = 255;
 
 
 int main()
 {
 	
-	const string winTresh = "Treshold", winColor = "Color", winTrack = "Settings";
+	const string winTresh = "Treshold", winColor = "Color", winControls = "Settings";
 
 	//Set SimpleBlobDetector parameters
 	SimpleBlobDetector::Params params;
 	params.filterByArea = true;
-	params.filterByCircularity = true;
-	params.minCircularity = .7;
-	params.maxCircularity = 1;
+	params.filterByCircularity = false;
+	// params.minCircularity = .7f;
+	// params.maxCircularity = 1;
 	params.filterByConvexity = false;
 	params.filterByInertia = false;
 	params.filterByColor = true;
 	params.blobColor = 255;
-	params.minArea = 100;
+	params.minArea = 200;
+	params.maxArea = 1000000;
 
 	Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(params);
 
@@ -40,34 +43,52 @@ int main()
 
 	CropWindow cropWindow(winColor, WINDOW_AUTOSIZE);
 	namedWindow(winTresh, WINDOW_AUTOSIZE);
-	namedWindow(winTrack, WINDOW_AUTOSIZE);
+	namedWindow(winControls, WINDOW_NORMAL);
 
-	int treshold = 70;
+	// int treshold = 70;
 	int blurSize = 5;
-	createTrackbar("treshold", winTrack, &treshold, 255);
-	createTrackbar("blur size", winTrack, &blurSize, 30);
-	
+	int low_H = 30, low_S = 50, low_V = 30;
+	int high_H = 110, high_S = max_value, high_V = max_value;
+
+	// createTrackbar("treshold", winControls, &treshold, 255);
+	createTrackbar("blur size", winControls, &blurSize, 30);
+
+	createTrackbar("Low H", winControls, &low_H, max_value_H);
+	createTrackbar("High H", winControls, &high_H, max_value_H);
+
+	createTrackbar("low S", winControls, &low_S, max_value);
+	createTrackbar("high S", winControls, &high_S, max_value);
+	createTrackbar("low V", winControls, &low_V, max_value);
+	createTrackbar("high V", winControls, &high_V, max_value);
 
 	while (true)
 	{
-		Mat frame, gray, bgr[3];
+		Mat frame, cropped, hsv, gray, bgr[3];
 		cap >> frame; // get a new frame from camera
 		
 		
 		cropWindow.setImage(frame);
 
 		// grey = cropWindow.getCropped();
+		hsv = cropWindow.getCropped();
 
-		// cvtColor(cropWindow.getCropped(), gray, COLOR_BGR2GRAY);
-		split(cropWindow.getCropped(), bgr);
-		gray = bgr[1];
+		int bSize = 2 * blurSize + 1;
+		// GaussianBlur(hsv, hsv, Size(bSize, bSize), 1.5, 1.5);
 
-		// std::vector<KeyPoint> keypoints;
-		// detector.detect(frame, keypoints);
+		cvtColor(hsv, hsv, COLOR_BGR2HSV);
+		
+		inRange(hsv, Scalar(low_H, low_S, low_V), Scalar(high_H, high_S, high_V), gray);
 
-		int bSize = 2*blurSize + 1;
-		// GaussianBlur(green, green, Size(bSize, bSize), 1.5, 1.5);
+		// split(cropWindow.getCropped(), bgr);
+		// gray = bgr[1];
+
+
+
+
+		
 		// threshold(grey, grey, treshold, 255, THRESH_BINARY_INV);
+
+		
 
 		vector<cv::KeyPoint> keypoints;
 		detector->detect(gray, keypoints);
