@@ -11,6 +11,8 @@ using namespace cropwin;
 const int max_value_H = 360 / 2;
 const int max_value = 255;
 
+const bool BLUR = false;
+
 
 int main()
 {
@@ -29,6 +31,10 @@ int main()
 	params.blobColor = 255;
 	params.minArea = 200;
 	params.maxArea = 1000000;
+	
+	params.minThreshold = 200;
+	params.maxThreshold = 255;
+	params.thresholdStep = 20;
 
 	Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(params);
 
@@ -51,7 +57,12 @@ int main()
 	int high_H = 110, high_S = max_value, high_V = max_value;
 
 	// createTrackbar("treshold", winControls, &treshold, 255);
-	createTrackbar("blur size", winControls, &blurSize, 30);
+
+	if (BLUR)
+	{
+		createTrackbar("blur size", winControls, &blurSize, 30);
+	}
+
 
 	createTrackbar("Low H", winControls, &low_H, max_value_H);
 	createTrackbar("High H", winControls, &high_H, max_value_H);
@@ -72,8 +83,12 @@ int main()
 		// grey = cropWindow.getCropped();
 		hsv = cropWindow.getCropped();
 
-		int bSize = 2 * blurSize + 1;
-		// GaussianBlur(hsv, hsv, Size(bSize, bSize), 1.5, 1.5);
+		if (BLUR)
+		{
+			int bSize = 2 * blurSize + 1;
+			GaussianBlur(hsv, hsv, Size(bSize, bSize), 1.5, 1.5);
+		}
+		
 
 		cvtColor(hsv, hsv, COLOR_BGR2HSV);
 		
