@@ -1,9 +1,8 @@
 #include<opencv2/opencv.hpp>
-#include<windows.h>
+// #include<windows.h>
 #include<iostream>
 
 #include "cropWindow.h"
-#include "midi.h"
 
 using namespace std;
 using namespace cv;
@@ -20,11 +19,8 @@ int main()
 	// Window names
 	const string winTresh = "Treshold", winColor = "Color", winControls = "Settings";
 
-	// Midi port
-	const int midiport = 1;
-	const int note = 69;
-	const int velocity = 70;
-	bool noteOn = false;
+	const int maxLostFrames = 3;
+	int lostFrames = 0;
 
 
 	// Set SimpleBlobDetector parameters
@@ -46,16 +42,6 @@ int main()
 
 	// Create blobdetector
 	Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(params);
-
-	// Open midi port
-	midi::MIDIManager midiMgr(midiport);
-	if (!midiMgr.isOpen())
-	{
-		cout << "Failed to open midi port!" << endl;
-		cin.get();
-		return -1;
-	}
-
 
 	VideoCapture cap(0);
 	if (!cap.isOpened())
@@ -124,20 +110,6 @@ int main()
 
 		Mat im_with_keypoints;
 		drawKeypoints(cropWindow.getCropped(), keypoints, im_with_keypoints, Scalar(0, 0, 255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-
-		if (keypoints.size() > 0)
-		{
-			if (!noteOn)
-			{
-				midiMgr.sendMsg(midi::NOTE_ON, note, velocity);
-				noteOn = true;
-			}
-		}
-		else if (noteOn)
-		{
-			midiMgr.sendMsg(midi::NOTE_OFF, note, 0);
-			noteOn = false;
-		}
 
 		// Show blobs
 		imshow("keypoints", im_with_keypoints);

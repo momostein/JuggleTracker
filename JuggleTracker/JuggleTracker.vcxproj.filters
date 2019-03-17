@@ -21,15 +21,12 @@
     <ClCompile Include="cropWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="midi.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cropWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="midi.h">
+    <ClInclude Include="tracker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
