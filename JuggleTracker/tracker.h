@@ -17,7 +17,7 @@ namespace tracker {
 		int missing;
 		void update(KeyPoint pt);
 		
-		void draw(InputArray image, InputOutputArray outImage, const Scalar & color);
+		void draw(InputOutputArray outImage, const Scalar & color);
 
 		Object(KeyPoint pos, unsigned int ID) : pos(pos), ID(ID) {};
 	};
@@ -48,26 +48,4 @@ namespace tracker {
 
 	// Find the index of nearest neighbor point from keypoints.
 	int nearestNeighbor(const KeyPoint& pt1, const vector<KeyPoint>& keypoints, double treshold = 400);
-
-
-	/**
-	 * Find pairs of points with the smallest distace between them
-	 */
-	void findPairs(
-		const vector<KeyPoint>& keypoints1,
-		const vector<KeyPoint>& keypoints2,
-		vector<Point2f>& srcPoints,
-		vector<Point2f>& dstPoints)
-	{
-		for (int i = 0; i < keypoints1.size(); i++) {
-			KeyPoint pt1 = keypoints1[i];
-
-			int nn = nearestNeighbor(pt1, keypoints2);
-			if (nn >= 0) {
-				KeyPoint pt2 = keypoints2[nn];
-				srcPoints.push_back(pt1.pt);
-				dstPoints.push_back(pt2.pt);
-			}
-		}
-	}
 }

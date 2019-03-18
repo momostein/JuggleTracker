@@ -7,7 +7,8 @@ namespace tracker
 {
 	void KeypointTracker::update(vector<KeyPoint> keypoints)
 	{
-		for (auto itr = objects_.begin(); itr != objects_.end(); itr++)
+		auto itr = objects_.begin();
+		while ( itr != objects_.end())
 		{
 			int nn = nearestNeighbor(itr->pos, keypoints);
 			if (nn >= 0)
@@ -15,6 +16,7 @@ namespace tracker
 				// Found a corresponding keypoint
 				itr->update(keypoints[nn]);
 				keypoints.erase(keypoints.begin() + nn);
+				itr++;
 			}
 			else
 			{
@@ -23,9 +25,11 @@ namespace tracker
 				{
 					// Remove object if it has been missing for too long
 					itr = objects_.erase(itr);
-					
-					// erase returns the next iterator so we go back a step
-					itr--; 
+
+				}
+				else
+				{
+					itr++;
 				}
 			}
 		}
@@ -38,17 +42,23 @@ namespace tracker
 
 	void KeypointTracker::draw(InputArray image, InputOutputArray outImage, const Scalar & color, DrawMatchesFlags flags)
 	{
+		// image.copyTo(outImage);
+
 		vector<KeyPoint> keypoints(objects_.size());
 		auto it = objects_.begin();
 		
 		for (int i = 0; it != objects_.end(); it++, i++)
 		{
-			it->draw(image, outImage, color);
+			// it->draw(outImage, color);
 			keypoints[i] = it->pos;
 		}
 		
 		drawKeypoints(image, keypoints, outImage, color, flags);
 
+		for (auto itr = objects_.begin(); itr != objects_.end(); itr++)
+		{
+			itr->draw(outImage, color);
+		}
 	}
 
 	
@@ -58,18 +68,18 @@ namespace tracker
 		missing = 0;
 	}
 
-	void Object::draw(InputArray image, InputOutputArray outImage, const Scalar & color)
+	void Object::draw(InputOutputArray outImage, const Scalar & color)
 	{
 		circle(outImage, pos.pt, 2, color, -1);
 		
 		string text = "ID: " + to_string(ID);
-		int fontFace = FONT_HERSHEY_SCRIPT_SIMPLEX;
+		int fontFace = FONT_HERSHEY_PLAIN;
 		double fontScale = 1;
 		int thickness = 2;
 
 		// then put the text itself
 		putText(outImage, text, pos.pt, fontFace, fontScale,
-			Scalar::all(255), thickness, 8);
+			color, thickness, 8);
 	}
 
 	/**

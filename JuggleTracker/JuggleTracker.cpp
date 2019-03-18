@@ -89,8 +89,8 @@ int main()
 		
 		cropWindow.setImage(frame);
 
-		// grey = cropWindow.getCropped();
-		hsv = cropWindow.getCropped();
+		cropped = cropWindow.getCropped();
+		cropped.copyTo(hsv);
 
 		if (BLUR)
 		{
@@ -112,6 +112,7 @@ int main()
 
 		vector<cv::KeyPoint> keypoints;
 		detector->detect(gray, keypoints);
+
 		tracker.update(keypoints);
 
 		Mat im_with_keypoints;
