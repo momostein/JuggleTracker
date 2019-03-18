@@ -3,10 +3,12 @@
 #include<iostream>
 
 #include "cropWindow.h"
+#include "tracker.h"
 
 using namespace std;
 using namespace cv;
 using namespace cropwin;
+using namespace tracker;
 
 const int max_value_H = 360 / 2;
 const int max_value = 255;
@@ -42,6 +44,9 @@ int main()
 
 	// Create blobdetector
 	Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(params);
+
+	// Create tracker
+	KeypointTracker tracker;
 
 	VideoCapture cap(0);
 	if (!cap.isOpened())
@@ -107,9 +112,10 @@ int main()
 
 		vector<cv::KeyPoint> keypoints;
 		detector->detect(gray, keypoints);
+		tracker.update(keypoints);
 
 		Mat im_with_keypoints;
-		drawKeypoints(cropWindow.getCropped(), keypoints, im_with_keypoints, Scalar(0, 0, 255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+		tracker.draw(cropped, im_with_keypoints, Scalar(0,0,255));
 
 		// Show blobs
 		imshow("keypoints", im_with_keypoints);
