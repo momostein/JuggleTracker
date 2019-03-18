@@ -8,6 +8,7 @@ namespace tracker {
 	class Object
 	{
 	private:
+		unsigned int ID;
 
 	public:
 		vector<float> vel;
@@ -15,6 +16,10 @@ namespace tracker {
 
 		int missing;
 		void update(KeyPoint pt);
+		
+		void draw(InputArray image, InputOutputArray outImage, const Scalar & color);
+
+		Object(KeyPoint pos, unsigned int ID) : pos(pos), ID(ID) {};
 	};
 
 
@@ -26,10 +31,13 @@ namespace tracker {
 
 		double maxDist;
 		int maxMissing;
+		unsigned int nextID;
 
 	public:
 		void update(vector<KeyPoint> keypoints);
 		const list<Object>& objects() const { return objects_; }
+
+		void draw(InputArray image, InputOutputArray outImage, const Scalar & color, DrawMatchesFlags flags = DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
 
 		KeypointTracker(double maxDist = 400, int maxMissing = 5) : maxDist(maxDist), maxMissing(maxMissing) {};
 	};
