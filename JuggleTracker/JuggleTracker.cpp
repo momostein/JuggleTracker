@@ -1,28 +1,55 @@
+// Uncomment to add gaussian blur (warning takes a lot of performance)
+// #define BLUR
+
+// Uncomment to enable cropping
+// #define CROPPING
+
 #include<opencv2/opencv.hpp>
-// #include<windows.h>
+#include<SFML/Graphics.hpp>
 #include<iostream>
 
-#include "cropWindow.h"
 #include "tracker.h"
+
+#ifdef CROPPING
+#include "cropWindow.h"
+#endif // CROPPING
+
 
 using namespace std;
 using namespace cv;
-using namespace cropwin;
 using namespace tracker;
+
+#ifdef CROPPING
+using namespace cropwin;
+#endif // CROPPING
+
 
 const int max_value_H = 360 / 2;
 const int max_value = 255;
 
-const bool BLUR = false;
-
+void renderingThread(sf::RenderWindow* window);
 
 int main()
 {
-	// Window names
-	const string winTresh = "Treshold", winColor = "Color", winControls = "Settings";
+	// ------------------------------
+	//		OPENCV
+	// ------------------------------
 
-	const int maxLostFrames = 3;
-	int lostFrames = 0;
+	// Window names
+	const string winTresh = "Treshold", winColor = "Color", winControls = "Settings", winKeyPoints = "Objects";
+
+	// Tracker parameters
+	const int maxLostFrames = 10;	// Maximum frames a missing object will persist
+	const int maxDist = 400;		// Maximum distance between keypoints to be considered the same
+
+	// Windows
+	namedWindow(winTresh, WINDOW_AUTOSIZE);				// Window for checking the thresholded image
+	namedWindow(winControls, WINDOW_NORMAL);			// Window with all the controls
+	namedWindow(winKeyPoints, WINDOW_AUTOSIZE);			// Window with all the objects
+
+#ifdef CROPPING
+	CropWindow cropWindow(winColor, WINDOW_AUTOSIZE);	// For cropping the input
+#endif // CROPPING
 
 
 	// Set SimpleBlobDetector parameters
@@ -46,8 +73,9 @@ int main()
 	Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(params);
 
 	// Create tracker
-	KeypointTracker tracker;
-
+	KeypointTracker tracker(maxDist, maxLostFrames);
+	
+	// Open camera
 	VideoCapture cap(0);
 	if (!cap.isOpened())
 	{
@@ -55,11 +83,8 @@ int main()
 		cin.get();
 		return -1;
 	}
-
-	CropWindow cropWindow(winColor, WINDOW_AUTOSIZE);
-	namedWindow(winTresh, WINDOW_AUTOSIZE);
-	namedWindow(winControls, WINDOW_NORMAL);
-
+	
+	// Sliders
 	// int treshold = 70;
 	int blurSize = 5;
 	int low_H = 30, low_S = 50, low_V = 30;
@@ -67,10 +92,9 @@ int main()
 
 	// createTrackbar("treshold", winControls, &treshold, 255);
 
-	if (BLUR)
-	{
-		createTrackbar("blur size", winControls, &blurSize, 30);
-	}
+#ifdef BLUR
+	createTrackbar("blur size", winControls, &blurSize, 30);
+#endif // BLUR
 
 
 	createTrackbar("Low H", winControls, &low_H, max_value_H);
@@ -81,50 +105,105 @@ int main()
 	createTrackbar("low V", winControls, &low_V, max_value);
 	createTrackbar("high V", winControls, &high_V, max_value);
 
-	while (true)
+	// ------------------------------
+	//		SFML
+	// ------------------------------
+
+	// create the window (remember: it's safer to create it in the main thread due to OS limitations)
+	sf::RenderWindow window(sf::VideoMode(800, 600), "TEST");
+
+	// deactivate its OpenGL context
+	window.setActive(false);
+
+	// launch the rendering thread
+	sf::Thread thread(&renderingThread, &window);
+	thread.launch();
+
+
+	while (window.isOpen())
 	{
-		Mat frame, cropped, hsv, gray, bgr[3];
+		Mat frame, hsv, thresh, bgr[3];
 		cap >> frame; // get a new frame from camera
-		
-		
+
+#ifdef CROPPING
 		cropWindow.setImage(frame);
+		cropWindow.getCropped().copyTo(frame);
+		cropWindow.show();
+#endif // CROPPING
 
-		cropped = cropWindow.getCropped();
-		cropped.copyTo(hsv);
 
-		if (BLUR)
-		{
-			int bSize = 2 * blurSize + 1;
-			GaussianBlur(hsv, hsv, Size(bSize, bSize), 1.5, 1.5);
-		}
+#ifdef BLUR
+		int bSize = 2 * blurSize + 1;
+		GaussianBlur(hsv, hsv, Size(bSize, bSize), 1.5, 1.5);
+#endif // BLUR
 		
 
-		cvtColor(hsv, hsv, COLOR_BGR2HSV);
+		cvtColor(frame , hsv, COLOR_BGR2HSV);
 		
-		inRange(hsv, Scalar(low_H, low_S, low_V), Scalar(high_H, high_S, high_V), gray);
-
-		// split(cropWindow.getCropped(), bgr);
-		// gray = bgr[1];
-		
-		// threshold(grey, grey, treshold, 255, THRESH_BINARY_INV);
-
-		
+		inRange(hsv, Scalar(low_H, low_S, low_V), Scalar(high_H, high_S, high_V), thresh);		
 
 		vector<cv::KeyPoint> keypoints;
-		detector->detect(gray, keypoints);
+		detector->detect(thresh, keypoints);
 
 		tracker.update(keypoints);
 
 		Mat im_with_keypoints;
-		tracker.draw(cropped, im_with_keypoints, Scalar(0,0,255));
+		tracker.draw(frame, im_with_keypoints, Scalar(0,0,255));
 
 		// Show blobs
-		imshow("keypoints", im_with_keypoints);
-		imshow(winTresh, gray);
-		cropWindow.show();
+		imshow(winKeyPoints, im_with_keypoints);
+		imshow(winTresh, thresh);
+		
+		// OpenCV events
+		if (waitKey(1) >= 0) break;
 
-		if (waitKey(10) >= 0) break;
+		// SFML events
+		sf::Event event;
+
+		// while there are pending events...
+		while (window.pollEvent(event))
+		{
+			// check the type of the event...
+			switch (event.type)
+			{
+				// window closed
+			case sf::Event::Closed:
+				window.close();
+				break;
+
+				// key pressed
+			case sf::Event::KeyPressed:
+				break;
+
+				// we don't process other types of events
+			default:
+				break;
+			}
+		}
 	}
 	// the camera will be deinitialized automatically in VideoCapture destructor
+	thread.wait();
+
 	return 0;
+}
+
+void renderingThread(sf::RenderWindow* window)
+{
+	// activate the window's context
+	window->setActive(true);
+
+	sf::CircleShape shape(50.f);
+
+	// set the shape color to green
+	shape.setFillColor(sf::Color(100, 250, 50));
+
+	// the rendering loop
+	while (window->isOpen())
+	{
+		// draw...
+		window->draw(shape);
+
+		// end the current frame
+		window->display();
+	}
 }
