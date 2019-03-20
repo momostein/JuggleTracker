@@ -91,11 +91,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="cropWindow.cpp" />
+    <ClCompile Include="graphics.cpp" />
     <ClCompile Include="JuggleTracker.cpp" />
     <ClCompile Include="tracker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cropWindow.h" />
+    <ClInclude Include="graphics.h" />
     <ClInclude Include="tracker.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

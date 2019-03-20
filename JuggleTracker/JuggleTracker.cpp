@@ -4,11 +4,14 @@
 // Uncomment to enable cropping
 // #define CROPPING
 
-#include<opencv2/opencv.hpp>
-#include<SFML/Graphics.hpp>
-#include<iostream>
+#include <opencv2/opencv.hpp>
+#include <SFML/Graphics.hpp>
+#include <iostream>
+#include <list>
 
 #include "tracker.h"
+#include "graphics.h"
+
 
 #ifdef CROPPING
 #include "cropWindow.h"
@@ -18,14 +21,17 @@
 using namespace std;
 using namespace cv;
 using namespace tracker;
+using namespace graphics;
 
 #ifdef CROPPING
 using namespace cropwin;
 #endif // CROPPING
 
-
 const int max_value_H = 360 / 2;
 const int max_value = 255;
+
+sf::Mutex myMutex;
+ThingManager things(myMutex);
 
 void renderingThread(sf::RenderWindow* window);
 
@@ -64,7 +70,7 @@ int main()
 	params.blobColor = 255;
 	params.minArea = 200;
 	params.maxArea = 1000000;
-	
+
 	params.minThreshold = 200;
 	params.maxThreshold = 255;
 	params.thresholdStep = 20;
@@ -73,8 +79,8 @@ int main()
 	Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(params);
 
 	// Create tracker
-	KeypointTracker tracker(maxDist, maxLostFrames);
-	
+	KeypointTracker tracker(&things, myMutex, maxDist, maxLostFrames);
+
 	// Open camera
 	VideoCapture cap(0);
 	if (!cap.isOpened())
@@ -83,7 +89,7 @@ int main()
 		cin.get();
 		return -1;
 	}
-	
+
 	// Sliders
 	// int treshold = 70;
 	int blurSize = 5;
@@ -119,7 +125,6 @@ int main()
 	sf::Thread thread(&renderingThread, &window);
 	thread.launch();
 
-
 	while (window.isOpen())
 	{
 		Mat frame, hsv, thresh, bgr[3];
@@ -136,27 +141,29 @@ int main()
 		int bSize = 2 * blurSize + 1;
 		GaussianBlur(hsv, hsv, Size(bSize, bSize), 1.5, 1.5);
 #endif // BLUR
-		
 
-		cvtColor(frame , hsv, COLOR_BGR2HSV);
-		
-		inRange(hsv, Scalar(low_H, low_S, low_V), Scalar(high_H, high_S, high_V), thresh);		
+
+		cvtColor(frame, hsv, COLOR_BGR2HSV);
+
+		inRange(hsv, Scalar(low_H, low_S, low_V), Scalar(high_H, high_S, high_V), thresh);
 
 		vector<cv::KeyPoint> keypoints;
 		detector->detect(thresh, keypoints);
 
-		tracker.update(keypoints);
+		tracker.update(keypoints, frame.size());
 
 		Mat im_with_keypoints;
-		tracker.draw(frame, im_with_keypoints, Scalar(0,0,255));
+		tracker.draw(frame, im_with_keypoints, Scalar(0, 0, 255));
 
 		// Show blobs
 		imshow(winKeyPoints, im_with_keypoints);
 		imshow(winTresh, thresh);
-		
-		// OpenCV events
-		if (waitKey(1) >= 0) break;
 
+		// OpenCV events
+		if (waitKey(1) >= 0)
+		{
+			window.close();
+		}
 		// SFML events
 		sf::Event event;
 
@@ -190,18 +197,17 @@ int main()
 void renderingThread(sf::RenderWindow* window)
 {
 	// activate the window's context
+	window->setFramerateLimit(60);
 	window->setActive(true);
-
-	sf::CircleShape shape(50.f);
-
-	// set the shape color to green
-	shape.setFillColor(sf::Color(100, 250, 50));
 
 	// the rendering loop
 	while (window->isOpen())
 	{
-		// draw...
-		window->draw(shape);
+		window->clear();
+
+		things.update();
+		window->draw(things);
+
 
 		// end the current frame
 		window->display();
