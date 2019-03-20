@@ -112,8 +112,15 @@ int main()
 	// create the window (remember: it's safer to create it in the main thread due to OS limitations)
 	sf::RenderWindow window(sf::VideoMode(800, 600), "TEST");
 
+	// deactivate its OpenGL context
+	window.setActive(false);
 
-	while (true)
+	// launch the rendering thread
+	sf::Thread thread(&renderingThread, &window);
+	thread.launch();
+
+
+	while (window.isOpen())
 	{
 		Mat frame, hsv, thresh, bgr[3];
 		cap >> frame; // get a new frame from camera
@@ -147,12 +154,56 @@ int main()
 		imshow(winKeyPoints, im_with_keypoints);
 		imshow(winTresh, thresh);
 		
-		window.display();
-
+		// OpenCV events
 		if (waitKey(1) >= 0) break;
+
+		// SFML events
+		sf::Event event;
+
+		// while there are pending events...
+		while (window.pollEvent(event))
+		{
+			// check the type of the event...
+			switch (event.type)
+			{
+				// window closed
+			case sf::Event::Closed:
+				window.close();
+				break;
+
+				// key pressed
+			case sf::Event::KeyPressed:
+				break;
+
+				// we don't process other types of events
+			default:
+				break;
+			}
+		}
 	}
 	// the camera will be deinitialized automatically in VideoCapture destructor
+	thread.wait();
 
 	return 0;
 }
 
+void renderingThread(sf::RenderWindow* window)
+{
+	// activate the window's context
+	window->setActive(true);
+
+	sf::CircleShape shape(50.f);
+
+	// set the shape color to green
+	shape.setFillColor(sf::Color(100, 250, 50));
+
+	// the rendering loop
+	while (window->isOpen())
+	{
+		// draw...
+		window->draw(shape);
+
+		// end the current frame
+		window->display();
+	}
+}
