@@ -82,7 +82,8 @@
       <AdditionalDependencies>opencv_world401.lib;sfml-graphics-s.lib;sfml-window-s.lib;sfml-system-s.lib;opengl32.lib;freetype.lib;winmm.lib;gdi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y $(ProjectDir)resources $(OutDir)resources\ /d</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>xcopy /y $(OPENCV_DIR)bin $(OutDir) /d</Command>
@@ -91,7 +92,6 @@
   <ItemGroup>
     <ClCompile Include="cropWindow.cpp" />
     <ClCompile Include="JuggleTracker.cpp" />
-    <ClCompile Include="SFML_test.cpp" />
     <ClCompile Include="tracker.cpp" />
   </ItemGroup>
   <ItemGroup>
