@@ -16,7 +16,7 @@ const int max_value = 255;
 const bool BLUR = false;
 
 
-int main()
+int main2()
 {
 	// Window names
 	const string winTresh = "Treshold", winColor = "Color", winControls = "Settings";
