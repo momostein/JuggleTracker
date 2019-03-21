@@ -46,7 +46,7 @@ int main()
 
 	// Tracker parameters
 	const int maxLostFrames = 20;	// Maximum frames a missing object will persist
-	const int maxDist = 400;		// Maximum distance between keypoints to be considered the same
+	const int maxDist = 700;		// Maximum distance between keypoints to be considered the same
 
 	// Windows
 	namedWindow(winTresh, WINDOW_AUTOSIZE);				// Window for checking the thresholded image
@@ -68,7 +68,7 @@ int main()
 	params.filterByInertia = false;
 	params.filterByColor = true;
 	params.blobColor = 255;
-	params.minArea = 100;
+	params.minArea = 200;
 	params.maxArea = 100000000;
 
 	params.minThreshold = 200;
