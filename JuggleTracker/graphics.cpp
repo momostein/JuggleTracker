@@ -117,7 +117,7 @@ namespace graphics
 
 	void JuggleThing::update()
 	{
-		std::cout << "x: " << x << "\t y: " << y << std::endl;
+		// std::cout << "x: " << x << "\t y: " << y << std::endl;
 	}
 	void JuggleThing::draw(sf::RenderTarget & target, sf::RenderStates states) const
 	{

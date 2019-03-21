@@ -84,8 +84,8 @@ namespace tracker
 	void Object::draw(InputOutputArray outImage, const Scalar & color)
 	{
 		circle(outImage, pos.pt, 2, color, -1);
-
-		string text = "ID: " + to_string(ID);
+		
+		string text = " " + to_string(ID);
 		int fontFace = FONT_HERSHEY_PLAIN;
 		double fontScale = 1;
 		int thickness = 2;

@@ -45,7 +45,7 @@ int main()
 	const string winTresh = "Treshold", winColor = "Color", winControls = "Settings", winKeyPoints = "Objects";
 
 	// Tracker parameters
-	const int maxLostFrames = 10;	// Maximum frames a missing object will persist
+	const int maxLostFrames = 20;	// Maximum frames a missing object will persist
 	const int maxDist = 400;		// Maximum distance between keypoints to be considered the same
 
 	// Windows
@@ -68,8 +68,8 @@ int main()
 	params.filterByInertia = false;
 	params.filterByColor = true;
 	params.blobColor = 255;
-	params.minArea = 200;
-	params.maxArea = 1000000;
+	params.minArea = 100;
+	params.maxArea = 100000000;
 
 	params.minThreshold = 200;
 	params.maxThreshold = 255;
@@ -93,8 +93,8 @@ int main()
 	// Sliders
 	// int treshold = 70;
 	int blurSize = 5;
-	int low_H = 30, low_S = 50, low_V = 30;
-	int high_H = 110, high_S = max_value, high_V = max_value;
+	int low_H = 30, low_S = 60, low_V = 40;
+	int high_H = 75, high_S = max_value, high_V = max_value;
 
 	// createTrackbar("treshold", winControls, &treshold, 255);
 
