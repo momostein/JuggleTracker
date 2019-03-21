@@ -15,16 +15,18 @@ namespace tracker {
 		JuggleThing* jug;
 
 		sf::Mutex* myMutex;
+		Point2f prevPos;
 
 	public:
-		vector<float> vel;
 		KeyPoint pos;
+		KeyPoint nextPos();
 
 		int missing;
 		void update(KeyPoint pt);
 		void updateThing(const Size &matSize);
 
 		void draw(InputOutputArray outImage, const Scalar & color);
+		
 
 		Object(
 			ThingManager* graphMgr, sf::Mutex *myMutex,

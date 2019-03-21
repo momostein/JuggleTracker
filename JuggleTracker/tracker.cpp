@@ -9,7 +9,7 @@ namespace tracker
 		auto itr = objects_.begin();
 		while (itr != objects_.end())
 		{
-			int nn = nearestNeighbor((*itr)->pos, keypoints);
+			int nn = nearestNeighbor((*itr)->nextPos(), keypoints);
 			if (nn >= 0)
 			{
 				// Found a corresponding keypoint
@@ -69,7 +69,9 @@ namespace tracker
 
 	void Object::update(KeyPoint pt)
 	{
+		prevPos = pos.pt;
 		pos = pt;
+
 		missing = 0;
 	}
 
@@ -93,10 +95,21 @@ namespace tracker
 			color, thickness, 8);
 	}
 
+	KeyPoint Object::nextPos()
+	{
+		KeyPoint next = pos;
+		next.pt.x += pos.pt.x - prevPos.x;
+		next.pt.y += pos.pt.y - prevPos.y;
+		
+		return next;
+	}
+
 	inline Object::Object(ThingManager * graphMgr, sf::Mutex * myMutex, KeyPoint pos, unsigned int ID) : myMutex(myMutex), pos(pos), ID(ID)
 	{
 		jug = new JuggleThing();
 		graphMgr->add(jug);
+
+		prevPos = pos.pt;
 	}
 
 	Object::~Object()
@@ -123,7 +136,9 @@ namespace tracker
 		double minDist = 1e6;
 
 		for (int i = 0; i < keypoints.size(); i++) {
+			
 			KeyPoint pt2 = keypoints[i];
+			
 			double d = euclidDistance(pt1, pt2);
 			//printf("%d %f\n", v.cols, d);
 
