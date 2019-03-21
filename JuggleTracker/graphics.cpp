@@ -28,7 +28,7 @@ namespace graphics
 		}
 		else
 		{
-			circle.setOrigin(radius / 2, radius / 2);
+			circle.setOrigin(radius, radius);
 			circle.setRadius(radius);
 		}
 
@@ -92,6 +92,13 @@ namespace graphics
 		for (Thing *i : things) target.draw(*i, states);
 	}
 
+	JuggleThing::JuggleThing() : x(0), y(0), Thing()
+	{
+		circle = sf::CircleShape(30.f, 50);
+		circle.setFillColor(sf::Color::Green);
+		circle.setOrigin(circle.getRadius(), circle.getRadius());
+	}
+
 	JuggleThing::~JuggleThing()
 	{
 		std::cout << "This jugglething is dead" << std::endl;
@@ -114,5 +121,11 @@ namespace graphics
 	}
 	void JuggleThing::draw(sf::RenderTarget & target, sf::RenderStates states) const
 	{
+		float drawX = x * target.getSize().x;
+		float drawY = y * target.getSize().y;
+
+		sf::CircleShape circle2(circle);
+		circle2.setPosition(drawX, drawY);
+		target.draw(circle2, states);
 	}
 }

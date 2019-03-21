@@ -75,7 +75,7 @@ namespace tracker
 
 	void Object::updateThing(const Size & matSize)
 	{
-		sf::Lock(*myMutex);
+		sf::Lock lock(*myMutex);
 		jug->moveTo(pos.pt.x / matSize.width, pos.pt.y / matSize.height);
 	}
 
@@ -101,7 +101,7 @@ namespace tracker
 
 	Object::~Object()
 	{
-		sf::Lock(*myMutex);
+		sf::Lock lock(*myMutex);
 		jug->kill();
 	}
 

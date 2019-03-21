@@ -47,7 +47,7 @@ namespace graphics
 	class JuggleThing : public Thing
 	{
 	public:
-		JuggleThing() : x(0), y(0), Thing() {};
+		JuggleThing();;
 		~JuggleThing();
 
 		void kill();
@@ -55,6 +55,7 @@ namespace graphics
 
 		virtual void update();
 	private:
+		sf::CircleShape circle;
 		int counter;
 		float x;
 		float y;
