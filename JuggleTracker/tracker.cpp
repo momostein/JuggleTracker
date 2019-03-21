@@ -1,31 +1,31 @@
 #include <string>
-
 #include "tracker.h"
 
 
 namespace tracker
 {
-	void KeypointTracker::update(vector<KeyPoint> keypoints)
+	void KeypointTracker::update(vector<KeyPoint> keypoints, const Size &matSize)
 	{
 		auto itr = objects_.begin();
-		while ( itr != objects_.end())
+		while (itr != objects_.end())
 		{
-			int nn = nearestNeighbor(itr->pos, keypoints);
+			int nn = nearestNeighbor((*itr)->pos, keypoints);
 			if (nn >= 0)
 			{
 				// Found a corresponding keypoint
-				itr->update(keypoints[nn]);
+				(*itr)->update(keypoints[nn]);
 				keypoints.erase(keypoints.begin() + nn);
 				itr++;
 			}
 			else
 			{
-				itr->missing++;
-				if (itr->missing > maxMissing)
+				(*itr)->missing++;
+				if ((*itr)->missing > maxMissing)
 				{
 					// Remove object if it has been missing for too long
+					delete *itr;
 					itr = objects_.erase(itr);
-
+					
 				}
 				else
 				{
@@ -36,7 +36,12 @@ namespace tracker
 
 		for (auto kit = keypoints.begin(); kit != keypoints.end(); kit++)
 		{
-			objects_.push_back(Object(*kit, nextID++));
+			objects_.push_back(new Object(graphMgr, myMutex, *kit, nextID++));
+		}
+
+		for (Object *i : objects_)
+		{
+			i->updateThing(matSize);
 		}
 	}
 
@@ -45,27 +50,33 @@ namespace tracker
 		// image.copyTo(outImage);
 
 		vector<KeyPoint> keypoints(objects_.size());
-		auto it = objects_.begin();
-		
-		for (int i = 0; it != objects_.end(); it++, i++)
+		auto itr = objects_.begin();
+
+		for (int i = 0; itr != objects_.end(); itr++, i++)
 		{
 			// it->draw(outImage, color);
-			keypoints[i] = it->pos;
+			keypoints[i] = (*itr)->pos;
 		}
-		
+
 		drawKeypoints(image, keypoints, outImage, color, flags);
 
 		for (auto itr = objects_.begin(); itr != objects_.end(); itr++)
 		{
-			itr->draw(outImage, color);
+			(*itr)->draw(outImage, color);
 		}
 	}
 
-	
+
 	void Object::update(KeyPoint pt)
 	{
 		pos = pt;
 		missing = 0;
+	}
+
+	void Object::updateThing(const Size & matSize)
+	{
+		sf::Lock lock(*myMutex);
+		jug->moveTo(pos.pt.x / matSize.width, pos.pt.y / matSize.height);
 	}
 
 	void Object::draw(InputOutputArray outImage, const Scalar & color)
@@ -80,6 +91,18 @@ namespace tracker
 		// then put the text itself
 		putText(outImage, text, pos.pt, fontFace, fontScale,
 			color, thickness, 8);
+	}
+
+	inline Object::Object(ThingManager * graphMgr, sf::Mutex * myMutex, KeyPoint pos, unsigned int ID) : myMutex(myMutex), pos(pos), ID(ID)
+	{
+		jug = new JuggleThing();
+		graphMgr->add(jug);
+	}
+
+	Object::~Object()
+	{
+		sf::Lock lock(*myMutex);
+		jug->kill();
 	}
 
 	/**

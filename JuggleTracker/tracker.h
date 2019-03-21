@@ -1,14 +1,20 @@
 #pragma once
 #include <opencv2/opencv.hpp>
+#include "graphics.h"
 
 namespace tracker {
 	using namespace std;
 	using namespace cv;
+	using namespace graphics;
 
 	class Object
 	{
 	private:
 		unsigned int ID;
+		ThingManager* graphMgr;
+		JuggleThing* jug;
+
+		sf::Mutex* myMutex;
 
 	public:
 		vector<float> vel;
@@ -16,10 +22,15 @@ namespace tracker {
 
 		int missing;
 		void update(KeyPoint pt);
-		
+		void updateThing(const Size &matSize);
+
 		void draw(InputOutputArray outImage, const Scalar & color);
 
-		Object(KeyPoint pos, unsigned int ID) : pos(pos), ID(ID) {};
+		Object(
+			ThingManager* graphMgr, sf::Mutex *myMutex,
+			KeyPoint pos, unsigned int ID);
+
+		~Object();
 	};
 
 
@@ -27,22 +38,28 @@ namespace tracker {
 	class KeypointTracker
 	{
 	private:
-		list<Object> objects_;
+		list<Object*> objects_;
+		ThingManager* graphMgr;
+		sf::Mutex* myMutex;
 
 		double maxDist;
 		int maxMissing;
 		unsigned int nextID;
 
 	public:
-		void update(vector<KeyPoint> keypoints);
-		const list<Object>& objects() const { return objects_; }
+		void update(vector<KeyPoint> keypoints, const Size &matSize);
+		void draw(
+			InputArray image, InputOutputArray outImage,
+			const Scalar & color, DrawMatchesFlags flags = DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
 
-		void draw(InputArray image, InputOutputArray outImage, const Scalar & color, DrawMatchesFlags flags = DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-
-		KeypointTracker(double maxDist = 400, int maxMissing = 5) : maxDist(maxDist), maxMissing(maxMissing) {};
+		KeypointTracker(
+			ThingManager* graphMgr, sf::Mutex &myMutex,
+			double maxDist = 400, int maxMissing = 5) :
+			graphMgr(graphMgr), myMutex(&myMutex),
+			maxDist(maxDist), maxMissing(maxMissing) {};
 	};
 
-	
+
 	// Calculate euclid distance
 	double euclidDistance(const KeyPoint& pt1, const KeyPoint& pt2);
 
