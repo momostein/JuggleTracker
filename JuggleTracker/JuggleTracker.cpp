@@ -87,8 +87,8 @@ int main()
 	// Sliders
 	// int treshold = 70;
 	int blurSize = 5;
-	int low_H = 30, low_S = 50, low_V = 30;
-	int high_H = 110, high_S = max_value, high_V = max_value;
+	int low_H = 30, low_S = 60, low_V = 40;
+	int high_H = 75, high_S = max_value, high_V = max_value;
 
 	// createTrackbar("treshold", winControls, &treshold, 255);
 
