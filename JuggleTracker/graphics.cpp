@@ -18,7 +18,7 @@ namespace graphics
 		std::cout << "ball is dead" << std::endl;
 	}
 
-	void Ball::update()
+	void Ball::update(const sf::View & view)
 	{
 		radius = radius - 0.5f;
 
@@ -39,7 +39,7 @@ namespace graphics
 		target.draw(circle, states);
 	}
 
-	void Thing::update()
+	void Thing::update(const sf::View & view)
 	{
 		dead = true;
 	}
@@ -51,12 +51,12 @@ namespace graphics
 		for (Thing *i : things) delete i;
 		things.clear();
 	}
-	void ThingManager::update()
+	void ThingManager::update(const sf::View & view)
 	{
 		sf::Lock lock(*myMutex);
 
 		// Update all objects
-		for (Thing *i : things) i->update();
+		for (Thing *i : things) i->update(view);
 
 		{
 			// Delete all dead objects
@@ -95,7 +95,10 @@ namespace graphics
 	JuggleThing::JuggleThing() : x(0), y(0), Thing()
 	{
 		circle = sf::CircleShape(30.f, 50);
-		circle.setFillColor(sf::Color::Green);
+		circle.setOutlineColor(sf::Color::White);
+		circle.setOutlineThickness(2);
+
+		circle.setFillColor(sf::Color::Transparent);
 		circle.setOrigin(circle.getRadius(), circle.getRadius());
 	}
 
@@ -115,17 +118,63 @@ namespace graphics
 		y = newY;
 	}
 
-	void JuggleThing::update()
+	void JuggleThing::update(const sf::View & view)
 	{
+		
 		// std::cout << "x: " << x << "\t y: " << y << std::endl;
-	}
-	void JuggleThing::draw(sf::RenderTarget & target, sf::RenderStates states) const
-	{
-		float drawX = x * target.getSize().x;
-		float drawY = y * target.getSize().y;
 
-		sf::CircleShape circle2(circle);
-		circle2.setPosition(drawX, drawY);
-		target.draw(circle2, states);
+		circle.setPosition(calcPos(view));
+	}
+	
+	void JuggleThing::draw(sf::RenderTarget & target, sf::RenderStates states) const
+	{		
+		target.draw(circle, states);
+	}
+
+	JuggleMesh::JuggleMesh() : lines(sf::PrimitiveType::Lines)
+	{
+	}
+
+	void JuggleMesh::update(const sf::View & view)
+	{
+		lines.clear();
+
+		if (manager == NULL)
+			return;
+
+		for (auto itr1 = manager->getThings().begin(); itr1 != manager->getThings().end(); itr1++)
+		{
+			if ((*itr1)->getType() != JUGGLETHING)
+				continue;
+
+			JuggleThing * thing1 = (JuggleThing*)*itr1;
+			sf::Vertex vertex1(thing1->calcPos(view), sf::Color::White);
+
+			for (auto itr2 = manager->getThings().begin(); itr2 != itr1; itr2++)
+			{
+				if ((*itr2)->getType() != JUGGLETHING)
+					continue;
+
+				JuggleThing * thing2 = (JuggleThing*)*itr2;				
+				sf::Vertex vertex2(thing2->calcPos(view), sf::Color::White);
+
+				lines.append(vertex1);
+				lines.append(vertex2);
+			}
+		}
+	}
+
+	void JuggleMesh::draw(sf::RenderTarget & target, sf::RenderStates states) const
+	{
+
+		target.draw(lines, states);
+	}
+
+	sf::Vector2f JuggleThing::calcPos(const sf::View & view)
+	{
+		float drawX = -x * view.getSize().x + view.getCenter().x; // -x voor spiegelbeeld
+		float drawY = y * view.getSize().y + view.getCenter().y;
+
+		return sf::Vector2f(drawX, drawY);
 	}
 }

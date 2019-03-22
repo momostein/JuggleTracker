@@ -2,7 +2,7 @@
 // #define BLUR
 
 // Uncomment to enable cropping
-// #define CROPPING
+#define CROPPING
 
 #include <opencv2/opencv.hpp>
 #include <SFML/Graphics.hpp>
@@ -46,7 +46,7 @@ int main()
 
 	// Tracker parameters
 	const int maxLostFrames = 20;	// Maximum frames a missing object will persist
-	const int maxDist = 400;		// Maximum distance between keypoints to be considered the same
+	const int maxDist = 500;		// Maximum distance between keypoints to be considered the same
 
 	// Windows
 	namedWindow(winTresh, WINDOW_AUTOSIZE);				// Window for checking the thresholded image
@@ -116,7 +116,7 @@ int main()
 	// ------------------------------
 
 	// create the window (remember: it's safer to create it in the main thread due to OS limitations)
-	sf::RenderWindow window(sf::VideoMode(800, 600), "TEST");
+	sf::RenderWindow window(sf::VideoMode(1920, 1080), "TEST");
 
 	// deactivate its OpenGL context
 	window.setActive(false);
@@ -200,12 +200,14 @@ void renderingThread(sf::RenderWindow* window)
 	window->setFramerateLimit(60);
 	window->setActive(true);
 
+	things.add(new JuggleMesh());
+
 	// the rendering loop
 	while (window->isOpen())
 	{
 		window->clear();
 
-		things.update();
+		things.update(window->getView());
 		window->draw(things);
 
 

@@ -4,44 +4,55 @@
 
 namespace tracker
 {
-	void KeypointTracker::update(vector<KeyPoint> keypoints, const Size &matSize)
+	void KeypointTracker::update(const vector<KeyPoint>& keypoints, const Size &matSize)
 	{
+		for (auto const& kp : keypoints)
+		{
+			double minDist = 1e6;
+			Object *selected = NULL;
+			for (Object *i : objects_)
+			{
+				if (i->found)
+					continue;
+
+				double dist = euclidDistance(kp, i->pos);
+				if (minDist > dist)
+				{
+					minDist = dist;
+					selected = i;
+				}
+			}
+
+			if ((minDist <= maxDist) && (selected != NULL))
+			{
+				selected->update(kp);
+			}
+			else 
+			{
+				sf::Lock lock(*myMutex);
+				objects_.push_back(new Object(graphMgr, myMutex, kp, nextID++));
+			}
+		}
+
 		auto itr = objects_.begin();
 		while (itr != objects_.end())
 		{
-			int nn = nearestNeighbor((*itr)->pos, keypoints);
-			if (nn >= 0)
-			{
-				// Found a corresponding keypoint
-				(*itr)->update(keypoints[nn]);
-				keypoints.erase(keypoints.begin() + nn);
-				itr++;
-			}
-			else
+			sf::Lock lock(*myMutex);
+			if (!(*itr)->found)
 			{
 				(*itr)->missing++;
-				if ((*itr)->missing > maxMissing)
+				if ((*itr)->missing >= maxMissing)
 				{
-					// Remove object if it has been missing for too long
 					delete *itr;
 					itr = objects_.erase(itr);
-					
-				}
-				else
-				{
-					itr++;
+					continue;
 				}
 			}
-		}
 
-		for (auto kit = keypoints.begin(); kit != keypoints.end(); kit++)
-		{
-			objects_.push_back(new Object(graphMgr, myMutex, *kit, nextID++));
-		}
-
-		for (Object *i : objects_)
-		{
-			i->updateThing(matSize);
+			(*itr)->updateThing(matSize);
+			
+			(*itr)->found = false;
+			itr++;
 		}
 	}
 
@@ -71,12 +82,13 @@ namespace tracker
 	{
 		pos = pt;
 		missing = 0;
+		found = true;
 	}
 
 	void Object::updateThing(const Size & matSize)
 	{
 		sf::Lock lock(*myMutex);
-		jug->moveTo(pos.pt.x / matSize.width, pos.pt.y / matSize.height);
+		jug->moveTo(pos.pt.x / matSize.width - 0.5f, pos.pt.y / matSize.height - 0.5f);
 	}
 
 	void Object::draw(InputOutputArray outImage, const Scalar & color)
@@ -97,6 +109,7 @@ namespace tracker
 	{
 		jug = new JuggleThing();
 		graphMgr->add(jug);
+		found = true;
 	}
 
 	Object::~Object()

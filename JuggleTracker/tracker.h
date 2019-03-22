@@ -21,6 +21,7 @@ namespace tracker {
 		KeyPoint pos;
 
 		int missing;
+		bool found;
 		void update(KeyPoint pt);
 		void updateThing(const Size &matSize);
 
@@ -47,7 +48,7 @@ namespace tracker {
 		unsigned int nextID;
 
 	public:
-		void update(vector<KeyPoint> keypoints, const Size &matSize);
+		void update(const vector<KeyPoint>& keypoints, const Size &matSize);
 		void draw(
 			InputArray image, InputOutputArray outImage,
 			const Scalar & color, DrawMatchesFlags flags = DrawMatchesFlags::DRAW_RICH_KEYPOINTS);

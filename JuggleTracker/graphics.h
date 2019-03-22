@@ -4,6 +4,14 @@
 
 namespace graphics
 {
+	enum ThingType
+	{
+		THING,
+		BALL,
+		JUGGLETHING,
+		JUGGLEMESH
+	};
+
 	class Thing;
 	class ThingManager;
 
@@ -13,7 +21,8 @@ namespace graphics
 		bool isDead() { return dead; };
 		Thing() : manager(NULL), dead(false) {};
 		
-		virtual void update();
+		virtual void update(const sf::View & view);
+		virtual ThingType getType() const { return THING; };
 
 	protected:
 		ThingManager* manager;
@@ -34,8 +43,8 @@ namespace graphics
 		Ball(sf::Vector2f pos, float radius = 50.f);
 		~Ball();
 
-		virtual void update();
-
+		virtual void update(const sf::View & view);
+		virtual ThingType getType() const { return BALL; };
 	private:
 		sf::Vector2f pos;
 		virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
@@ -47,18 +56,38 @@ namespace graphics
 	class JuggleThing : public Thing
 	{
 	public:
-		JuggleThing();;
+		JuggleThing();
 		~JuggleThing();
 
 		void kill();
 		void moveTo(float newX, float newY);
 
-		virtual void update();
+		virtual void update(const sf::View & view);
+		virtual ThingType getType() const { return JUGGLETHING; };
+
+		sf::Vector2f calcPos(const sf::View & view);
+
 	private:
 		sf::CircleShape circle;
 		int counter;
 		float x;
 		float y;
+		virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
+
+		
+
+	};
+
+	class JuggleMesh : public Thing
+	{
+	public:
+		JuggleMesh();
+		
+		virtual void update(const sf::View & view);
+		virtual ThingType getType() const { return JUGGLEMESH; };
+
+	private:
+		sf::VertexArray lines;
 		virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
 	};
@@ -69,12 +98,14 @@ namespace graphics
 		ThingManager(sf::Mutex &_mutex) : myMutex(&_mutex) {};
 		~ThingManager();
 		
-		void update();
+		void update(const sf::View & view);
 		void add(Thing* thing);
+
+		const std::list<Thing*>& getThings() const { return things; };
+
 	private:
 		sf::Mutex* myMutex;
 		std::list<Thing*> things;
 		virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 	};
-
 }
